@@ -4,279 +4,226 @@
     <meta charset="UTF-8">
     <title>Splitsen: Getalbeelden & Cijfers</title>
     <style>
-        :root { 
-            --active-blue: #007bff; 
-            --bg-gray: #d3d3d3; 
-            --line-color: #555; 
-            --error-red: #e74c3c; 
-            --correct-green: #27ae60; 
+        :root {
+            --active-blue: #007bff;
+            --bg-gray: #d3d3d3;
+            --line-color: #555;
+            --error-red: #e74c3c;
+            --correct-green: #27ae60;
         }
         body { font-family: 'Arial', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); text-align: center; width: 100%; max-width: 700px; position: relative; }
-        
         .exit-btn { position: absolute; top: 15px; left: 15px; background: #95a5a6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em; z-index: 100; }
-
         .grid-wrapper { position: relative; width: fit-content; margin: 0 auto; display: flex; justify-content: center; align-items: center; min-height: 120px; }
         .grid-frame { display: grid; grid-template-columns: repeat(5, 40px); grid-template-rows: repeat(2, 40px); gap: 8px; justify-content: center; padding: 10px; background: #fff; border: 2px solid #aaa; width: fit-content; border-radius: 8px; }
-        
         .dot { width: 40px; height: 40px; background-color: var(--bg-gray); border-radius: 6px; border: 1px solid #bbb; position: relative; }
         .dot.blue { background-color: var(--active-blue); border-color: #0056b3; }
         .dot.missing { background-color: var(--error-red); border-color: #c0392b; }
-        .dot.too-many::after { content: '✕'; color: white; font-size: 30px; line-height: 40px; font-weight: bold; position: absolute; top: 0; left: 0; width: 100%; text-align: center; }
-
+        .dot.too-many::after { content: ' ✕ '; color: white; font-size: 30px; line-height: 40px; font-weight: bold; position: absolute; top: 0; left: 0; width: 100%; text-align: center; }
         .big-number { font-size: 5em; font-weight: 900; color: #333; }
-        
-        .overlay-num { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            font-size: 5.5em; font-weight: 950; pointer-events: none; z-index: 10; 
-            display: none;
-            -webkit-text-stroke: 4px black; 
-            paint-order: stroke fill;
-        }
+        .overlay-num { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5.5em; font-weight: 950; pointer-events: none; z-index: 10; display: none; -webkit-text-stroke: 4px black; paint-order: stroke fill; }
         .overlay-num.visible { display: block; color: #333; -webkit-text-stroke: 1px white; }
         .overlay-num.green { color: var(--correct-green); display: block; }
         .overlay-num.red { color: var(--error-red); display: block; }
-
         .num-input { width: 90px; height: 90px; font-size: 3.5em; text-align: center; border: 3px solid var(--active-blue); border-radius: 10px; font-weight: bold; }
-
         .tree-container { margin-top: 10px; }
         .lines-svg { width: 400px; height: 60px; display: block; margin: 0 auto; }
         .split-row { display: flex; justify-content: center; gap: 40px; align-items: center; }
-
         .control-group { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
         .number-selector-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
         .num-btn { padding: 15px; border: 2px solid #ccc; border-radius: 8px; cursor: pointer; background: white; font-weight: bold; font-size: 1.2em; }
         .num-btn.active { background-color: var(--active-blue); color: white; border-color: #0056b3; }
-        
         button.action-btn { background: #34495e; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 1.1em; margin: 5px; }
         button.start-btn { background: #27ae60; width: 100%; font-size: 1.3em; margin-top: 15px; border: none; color: white; padding: 15px; border-radius: 8px; cursor: pointer; }
         .hidden { display: none !important; }
+        .cc-footer { margin-top: 20px; font-size: 0.8em; color: #7f8c8d; }
     </style>
 </head>
 <body>
-
-<div id="setup" class="card">
-    <h2>Instellingen</h2>
-    <div class="control-group">
-        <p><strong>1. Kies de getallen:</strong></p>
-        <div style="margin-bottom: 10px;">
-            <button class="action-btn" style="padding: 5px 10px; font-size: 0.8em;" onclick="selectAll(true)">Alles aan</button>
-            <button class="action-btn" style="padding: 5px 10px; font-size: 0.8em;" onclick="selectAll(false)">Alles uit</button>
+    <div id="setup" class="card">
+        <h2>Instellingen</h2>
+        <div class="control-group">
+            <p><strong>1. Kies de getallen:</strong></p>
+            <div style="margin-bottom: 10px;">
+                <button class="action-btn" style="padding: 5px 10px; font-size: 0.8em;" onclick="selectAll(true)">Alles aan</button>
+                <button class="action-btn" style="padding: 5px 10px; font-size: 0.8em;" onclick="selectAll(false)">Alles uit</button>
+            </div>
+            <div class="number-selector-grid" id="numPicker"></div>
         </div>
-        <div class="number-selector-grid" id="numPicker"></div>
-    </div>
-    <div class="control-group">
-        <p><strong>2. Kies de modus:</strong></p>
-        <select id="gameMode" style="padding: 10px; width: 80%; font-size: 1em; border-radius: 8px;">
-            <option value="images">Enkel Getalbeelden</option>
-            <option value="numbers">Enkel Cijfers</option>
-            <option value="both">Cijfers + Getalbeelden</option>
-        </select>
-    </div>
-    <div class="control-group">
-        <p><strong>3. Aantal oefeningen:</strong> 
-           <input type="number" id="exCount" value="5" min="1" style="padding: 10px; width: 60px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc;">
-        </p>
-    </div>
-    <button class="start-btn" onclick="startGame()">Start de reeks</button>
-</div>
-
-<div id="game" class="card hidden">
-    <button class="exit-btn" onclick="goToMenu()">✖ Stop</button>
-    <div id="progress" style="margin-bottom: 10px; font-weight: bold; color: #7f8c8d;"></div>
-    
-    <div class="grid-wrapper">
-        <div id="main-grid" class="grid-frame"></div>
-        <div id="num-main" class="overlay-num"></div>
-        <div id="plain-num-main" class="big-number hidden"></div>
+        <div class="control-group">
+            <p><strong>2. Kies de modus:</strong></p>
+            <select id="gameMode" style="padding: 10px; width: 80%; font-size: 1em; border-radius: 8px;">
+                <option value="images">enkel getalbeelden</option>
+                <option value="numbers">enkel cijfers</option>
+                <option value="both">cijfers + getalbeelden</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <p><strong>3. Aantal oefeningen:</strong>
+            <input type="number" id="exCount" value="5" min="1" style="padding: 10px; width: 60px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc;">
+            </p>
+        </div>
+        <button class="start-btn" onclick="startGame()">Start de reeks</button>
+        <div class="cc-footer">CC BY-NC-SA 4.0 NicoKlas</div>
     </div>
 
-    <div class="tree-container">
-        <svg class="lines-svg" viewBox="0 0 400 60">
-            <line x1="200" y1="0" x2="100" y2="60" style="stroke:var(--line-color); stroke-width:3" />
-            <line x1="200" y1="0" x2="300" y2="60" style="stroke:var(--line-color); stroke-width:3" />
-        </svg>
-    </div>
-
-    <div class="split-row">
+    <div id="game" class="card hidden">
+        <button class="exit-btn" onclick="goToMenu()"> ✖  Stop</button>
+        <div id="progress" style="margin-bottom: 10px; font-weight: bold; color: #7f8c8d;"></div>
         <div class="grid-wrapper">
-            <div id="left-grid" class="grid-frame"></div>
-            <div id="num-left" class="overlay-num"></div>
-            <div id="plain-num-left" class="big-number hidden"></div>
+            <div id="main-grid" class="grid-frame"></div>
+            <div id="num-main" class="overlay-num"></div>
+            <div id="plain-num-main" class="big-number hidden"></div>
         </div>
-        <div class="grid-wrapper">
-            <div id="right-grid" class="grid-frame"></div>
-            <div id="num-right" class="overlay-num"></div>
-            <input type="number" id="num-input-right" class="num-input hidden" placeholder="?">
+        <div class="tree-container">
+            <svg class="lines-svg" viewBox="0 0 400 60">
+                <line x1="200" y1="0" x2="100" y2="60" style="stroke:var(--line-color); stroke-width:3" />
+                <line x1="200" y1="0" x2="300" y2="60" style="stroke:var(--line-color); stroke-width:3" />
+            </svg>
         </div>
+        <div class="split-row">
+            <div class="grid-wrapper">
+                <div id="left-grid" class="grid-frame"></div>
+                <div id="num-left" class="overlay-num"></div>
+                <div id="plain-num-left" class="big-number hidden"></div>
+            </div>
+            <div class="grid-wrapper">
+                <div id="right-grid" class="grid-frame"></div>
+                <div id="num-right" class="overlay-num"></div>
+                <input type="number" id="num-input-right" class="num-input hidden" placeholder="?">
+            </div>
+        </div>
+        <button id="checkBtn" class="start-btn" onclick="verify()" style="margin-top:30px;">Klaar</button>
+        <button id="nextBtn" class="action-btn hidden" onclick="handleNextClick()" style="background:var(--active-blue); width:100%; margin-top:30px;">Volgende oefening</button>
+        <div class="cc-footer">CC BY-NC-SA 4.0 NicoKlas</div>
     </div>
 
-    <button id="checkBtn" class="start-btn" onclick="verify()" style="margin-top:30px;">Klaar</button>
-    <button id="nextBtn" class="action-btn hidden" onclick="handleNextClick()" style="background:var(--active-blue); width:100%; margin-top:30px;">Volgende oefening</button>
-</div>
+    <div id="result" class="card hidden">
+        <h2>Resultaat: <span id="finalScore"></span></h2>
+        <button class="action-btn" onclick="goToMenu()">Terug naar start</button>
+        <div class="cc-footer">CC BY-NC-SA 4.0 NicoKlas</div>
+    </div>
 
-<div id="result" class="card hidden">
-    <h2>Resultaat: <span id="finalScore"></span></h2>
-    <button class="action-btn" onclick="goToMenu()">Terug naar start</button>
-</div>
-
-<script>
-    let selectedNums = [1,2,3,4,5,6,7,8,9,10];
-    let game = { total: 0, current: 0, score: 0, target: 0, left: 0, mode: 'images' };
-    const visualOrder = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9];
-
-    const picker = document.getElementById('numPicker');
-    for(let i=1; i<=10; i++) picker.innerHTML += `<div class="num-btn active" id="btn-${i}" onclick="toggleNum(this, ${i})">${i}</div>`;
-
-    function toggleNum(el, n) {
-        el.classList.toggle('active');
-        if(el.classList.contains('active')) { if(!selectedNums.includes(n)) selectedNums.push(n); }
-        else { selectedNums = selectedNums.filter(x => x !== n); }
-    }
-
-    function selectAll(bool) {
-        selectedNums = bool ? [1,2,3,4,5,6,7,8,9,10] : [];
-        for(let i=1; i<=10; i++) document.getElementById(`btn-${i}`).className = bool ? "num-btn active" : "num-btn";
-    }
-
-    function goToMenu() {
-        document.getElementById('setup').classList.remove('hidden');
-        document.getElementById('game').classList.add('hidden');
-        document.getElementById('result').classList.add('hidden');
-    }
-
-    function createGrid(containerId, activeCount, isInteractive = false) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = '';
-        container.classList.toggle('hidden', game.mode === 'numbers');
-
-        let slots = new Array(10);
-        for(let i = 0; i < 10; i++) {
-            const dot = document.createElement('div');
-            dot.className = 'dot' + (i < activeCount ? ' blue' : '');
-            dot.dataset.vOrder = i;
-            if (isInteractive && game.mode !== 'numbers') {
-                dot.style.cursor = 'pointer';
-                dot.onclick = function() { if(!this.classList.contains('locked')) this.classList.toggle('blue'); };
+    <script>
+        let selectedNums = [1,2,3,4,5,6,7,8,9,10];
+        let game = { total: 0, current: 0, score: 0, target: 0, left: 0, mode: 'images' };
+        const visualOrder = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9];
+        const picker = document.getElementById('numPicker');
+        for(let i=1; i<=10; i++) picker.innerHTML += `<div class="num-btn active" id="btn-${i}" onclick="toggleNum(this, ${i})">${i}</div>`;
+        function toggleNum(el, n) {
+            el.classList.toggle('active');
+            if(el.classList.contains('active')) { if(!selectedNums.includes(n)) selectedNums.push(n); }
+            else { selectedNums = selectedNums.filter(x => x !== n); }
+        }
+        function selectAll(bool) {
+            selectedNums = bool ? [1,2,3,4,5,6,7,8,9,10] : [];
+            for(let i=1; i<=10; i++) document.getElementById(`btn-${i}`).className = bool ? "num-btn active" : "num-btn";
+        }
+        function goToMenu() {
+            document.getElementById('setup').classList.remove('hidden');
+            document.getElementById('game').classList.add('hidden');
+            document.getElementById('result').classList.add('hidden');
+        }
+        function createGrid(containerId, activeCount, isInteractive = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            container.classList.toggle('hidden', game.mode === 'numbers');
+            let slots = new Array(10);
+            for(let i = 0; i < 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot' + (i < activeCount ? ' blue' : '');
+                dot.dataset.vOrder = i;
+                if (isInteractive && game.mode !== 'numbers') {
+                    dot.style.cursor = 'pointer';
+                    dot.onclick = function() { if(!this.classList.contains('locked')) this.classList.toggle('blue'); };
+                }
+                slots[visualOrder[i]] = dot;
             }
-            slots[visualOrder[i]] = dot;
+            slots.forEach(s => container.appendChild(s));
         }
-        slots.forEach(s => container.appendChild(s));
-    }
-
-    function startGame() {
-        if(selectedNums.length === 0) return alert("Kies getallen!");
-        
-        // RESET GAME STATE
-        game.mode = document.getElementById('gameMode').value;
-        game.total = parseInt(document.getElementById('exCount').value);
-        game.current = 1; 
-        game.score = 0;
-
-        document.getElementById('setup').classList.add('hidden');
-        document.getElementById('result').classList.add('hidden');
-        document.getElementById('game').classList.remove('hidden');
-        
-        loadNext();
-    }
-
-    function loadNext() {
-        game.target = selectedNums[Math.floor(Math.random() * selectedNums.length)];
-        game.left = Math.floor(Math.random() * (game.target + 1));
-        
-        document.getElementById('progress').innerText = `Oefening ${game.current} van ${game.total}`;
-        
-        // UI Resets
-        ["num-main", "num-left", "num-right"].forEach(id => { 
-            const el = document.getElementById(id);
-            el.className = "overlay-num"; 
-            el.innerText = "";
-        });
-        document.getElementById('num-input-right').value = "";
-        
-        const isNumMode = game.mode === 'numbers';
-        document.getElementById('plain-num-main').innerText = game.target;
-        document.getElementById('plain-num-left').innerText = game.left;
-        document.getElementById('plain-num-main').classList.toggle('hidden', !isNumMode);
-        document.getElementById('plain-num-left').classList.toggle('hidden', !isNumMode);
-        document.getElementById('num-input-right').classList.toggle('hidden', !isNumMode);
-
-        if(game.mode === 'both') {
-            showOverlay('num-main', game.target, 'visible');
-            showOverlay('num-left', game.left, 'visible');
-        }
-
-        document.getElementById('nextBtn').classList.add('hidden');
-        document.getElementById('nextBtn').innerText = "Volgende oefening";
-        document.getElementById('checkBtn').classList.remove('hidden');
-        
-        createGrid('main-grid', game.target);
-        createGrid('left-grid', game.left);
-        createGrid('right-grid', 0, true);
-    }
-
-    function verify() {
-        const correctRight = game.target - game.left;
-        let userCount = 0;
-
-        if (game.mode === 'numbers') {
-            userCount = parseInt(document.getElementById('num-input-right').value);
-            if(isNaN(userCount)) return;
-        } else {
-            userCount = document.querySelectorAll('#right-grid .dot.blue').length;
-        }
-
-        const isCorrect = userCount === correctRight;
-        const color = isCorrect ? 'green' : 'red';
-
-        if (game.mode === 'numbers') {
-            document.getElementById('num-input-right').classList.add('hidden');
-            document.getElementById('plain-num-main').classList.add('hidden');
-            document.getElementById('plain-num-left').classList.add('hidden');
-        }
-
-        showOverlay('num-main', game.target, color);
-        showOverlay('num-left', game.left, color);
-        showOverlay('num-right', correctRight, color);
-
-        if (!isCorrect && game.mode !== 'numbers') {
-            const dots = Array.from(document.querySelectorAll('#right-grid .dot'));
-            dots.sort((a,b) => a.dataset.vOrder - b.dataset.vOrder).forEach((dot, i) => {
-                if (i < correctRight && !dot.classList.contains('blue')) dot.classList.add('missing');
-                if (i >= correctRight && dot.classList.contains('blue')) dot.classList.add('too-many');
-            });
-        }
-
-        if (isCorrect) game.score++;
-        
-        document.getElementById('checkBtn').classList.add('hidden');
-        document.getElementById('nextBtn').classList.remove('hidden');
-
-        if(game.current >= game.total) {
-            document.getElementById('nextBtn').innerText = "Bekijk resultaat";
-        }
-    }
-
-    function handleNextClick() {
-        if(game.current >= game.total) {
-            showResult();
-        } else {
-            game.current++;
+        function startGame() {
+            if(selectedNums.length === 0) return alert("Kies getallen!");
+            game.mode = document.getElementById('gameMode').value;
+            game.total = parseInt(document.getElementById('exCount').value);
+            game.current = 1;
+            game.score = 0;
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('game').classList.remove('hidden');
             loadNext();
         }
-    }
-
-    function showResult() {
-        document.getElementById('game').classList.add('hidden');
-        document.getElementById('result').classList.remove('hidden');
-        document.getElementById('finalScore').innerText = `${game.score} / ${game.total}`;
-    }
-
-    function showOverlay(id, val, cls) {
-        const el = document.getElementById(id);
-        el.innerText = val;
-        el.className = 'overlay-num ' + cls;
-    }
-</script>
+        function loadNext() {
+            game.target = selectedNums[Math.floor(Math.random() * selectedNums.length)];
+            game.left = Math.floor(Math.random() * (game.target + 1));
+            document.getElementById('progress').innerText = `Oefening ${game.current} van ${game.total}`;
+            ["num-main", "num-left", "num-right"].forEach(id => {
+                const el = document.getElementById(id);
+                el.className = "overlay-num";
+                el.innerText = "";
+            });
+            document.getElementById('num-input-right').value = "";
+            const isNumMode = game.mode === 'numbers';
+            document.getElementById('plain-num-main').innerText = game.target;
+            document.getElementById('plain-num-left').innerText = game.left;
+            document.getElementById('plain-num-main').classList.toggle('hidden', !isNumMode);
+            document.getElementById('plain-num-left').classList.toggle('hidden', !isNumMode);
+            document.getElementById('num-input-right').classList.toggle('hidden', !isNumMode);
+            if(game.mode === 'both') {
+                showOverlay('num-main', game.target, 'visible');
+                showOverlay('num-left', game.left, 'visible');
+            }
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('nextBtn').innerText = "Volgende oefening";
+            document.getElementById('checkBtn').classList.remove('hidden');
+            createGrid('main-grid', game.target);
+            createGrid('left-grid', game.left);
+            createGrid('right-grid', 0, true);
+        }
+        function verify() {
+            const correctRight = game.target - game.left;
+            let userCount = 0;
+            if (game.mode === 'numbers') {
+                userCount = parseInt(document.getElementById('num-input-right').value);
+                if(isNaN(userCount)) return;
+            } else {
+                userCount = document.querySelectorAll('#right-grid .dot.blue').length;
+            }
+            const isCorrect = userCount === correctRight;
+            const color = isCorrect ? 'green' : 'red';
+            if (game.mode === 'numbers') {
+                document.getElementById('num-input-right').classList.add('hidden');
+                document.getElementById('plain-num-main').classList.add('hidden');
+                document.getElementById('plain-num-left').classList.add('hidden');
+            }
+            showOverlay('num-main', game.target, color);
+            showOverlay('num-left', game.left, color);
+            showOverlay('num-right', correctRight, color);
+            if (!isCorrect && game.mode !== 'numbers') {
+                const dots = Array.from(document.querySelectorAll('#right-grid .dot'));
+                dots.sort((a,b) => a.dataset.vOrder - b.dataset.vOrder).forEach((dot, i) => {
+                    if (i < correctRight && !dot.classList.contains('blue')) dot.classList.add('missing');
+                    if (i >= correctRight && dot.classList.contains('blue')) dot.classList.add('too-many');
+                });
+            }
+            if (isCorrect) game.score++;
+            document.getElementById('checkBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+            if(game.current >= game.total) { document.getElementById('nextBtn').innerText = "Bekijk resultaat"; }
+        }
+        function handleNextClick() {
+            if(game.current >= game.total) { showResult(); }
+            else { game.current++; loadNext(); }
+        }
+        function showResult() {
+            document.getElementById('game').classList.add('hidden');
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = `${game.score} / ${game.total}`;
+        }
+        function showOverlay(id, val, cls) {
+            const el = document.getElementById(id);
+            el.innerText = val;
+            el.className = 'overlay-num ' + cls;
+        }
+    </script>
 </body>
 </html>
